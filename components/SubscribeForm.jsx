@@ -17,7 +17,6 @@ export default function SubscribeForm() {
   const phoneCountrySelectRef = useRef(null);
   const billingCountrySelectRef = useRef(null);
 
-  // ✅ Separate state for contact vs billing info
   const [contactName, setContactName] = useState("");
   const [billingName, setBillingName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,7 +34,6 @@ export default function SubscribeForm() {
   const [successMessage, setSuccessMessage] = useState("");
   const [phonePlaceholder, setPhonePlaceholder] = useState("(201) 555‑0123");
 
-  // ✅ Dynamic State/Province label
   const REGION_LABELS = {
     US: "State",
     CA: "Province",
@@ -89,7 +87,6 @@ export default function SubscribeForm() {
   const phoneRegions = REGIONS[phoneCountry] || [];
   const billingRegions = REGIONS[billingCountry] || [];
 
-  // ✅ Update phone placeholder based on phoneCountry
   useEffect(() => {
     const countryData = COUNTRY_CODES.find((c) => c.code === phoneCountry);
     if (countryData && countryData.placeholder) {
@@ -97,12 +94,11 @@ export default function SubscribeForm() {
     } else {
       setPhonePlaceholder("(201) 555‑0123");
     }
-    setPhone(""); // clear phone input when changing country
+    setPhone("");
   }, [phoneCountry]);
 
-  // ✅ Auto-format phone input to match placeholder format
   const handlePhoneChange = (e) => {
-    const input = e.target.value.replace(/\D/g, ""); // digits only
+    const input = e.target.value.replace(/\D/g, "");
     const countryData = COUNTRY_CODES.find((c) => c.code === phoneCountry);
     if (!countryData || !countryData.placeholder) {
       setPhone(e.target.value);
@@ -135,7 +131,6 @@ export default function SubscribeForm() {
       return;
     }
 
-    // ✅ Phone validation
     const countryData = COUNTRY_CODES.find((c) => c.code === phoneCountry);
     const enteredDigits = phone.replace(/\D/g, "");
     const expectedDigits = (countryData?.placeholder || "").replace(/\D/g, "").length;
@@ -154,7 +149,6 @@ export default function SubscribeForm() {
     try {
       const cardElement = elements.getElement(CardNumberElement);
 
-      // ✅ Prepend country dial code to phone for Stripe correctly
       let dialCode = countryData?.dial || "";
       if (dialCode && !dialCode.startsWith("+")) dialCode = "+" + dialCode;
       const digitsOnly = phone.replace(/\D/g, "");
@@ -184,7 +178,7 @@ export default function SubscribeForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: contactName, // ✅ contact details name sent to 'individual_name'
+          name: contactName,
           email,
           phone: phoneForStripe,
           paymentMethodId: paymentMethod.id,
@@ -210,24 +204,27 @@ export default function SubscribeForm() {
     setLoading(false);
   };
 
+  // ✅ Mobile detection
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 480;
+
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "#00bbff",
+        background: isMobile ? "white" : "#00bbff",
         display: "flex",
         justifyContent: "center",
-        padding: "20px 8px", // ✅ reduced blue padding
+        padding: isMobile ? "0px" : "40px 16px",
       }}
     >
       <div
         style={{
           background: "white",
-          borderRadius: "18px",
+          borderRadius: isMobile ? "0px" : "18px",
           maxWidth: "520px",
           width: "100%",
-          padding: "28px",
-          boxShadow: "0 12px 32px rgba(0,0,0,0.15)",
+          padding: isMobile ? "16px" : "28px",
+          boxShadow: isMobile ? "none" : "0 12px 32px rgba(0,0,0,0.15)",
           fontFamily: "Montserrat, sans-serif",
         }}
       >
@@ -276,7 +273,13 @@ export default function SubscribeForm() {
                 ref={phoneCountrySelectRef}
                 value={phoneCountry}
                 onChange={(e) => setPhoneCountry(e.target.value)}
-                style={{ ...inputBase, minWidth: "60px", maxWidth: "70px", padding: "6px", fontSize: "14px" }} // ✅ smaller
+                style={{
+                  ...inputBase,
+                  minWidth: isMobile ? "50px" : "60px",
+                  maxWidth: isMobile ? "60px" : "70px",
+                  padding: isMobile ? "4px" : "6px",
+                  fontSize: "14px",
+                }}
               >
                 {COUNTRY_CODES.map((c) => (
                   <option key={c.code} value={c.code}>
