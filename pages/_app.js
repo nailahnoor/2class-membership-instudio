@@ -1,4 +1,3 @@
-// pages/_app.js
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
@@ -14,7 +13,6 @@ export default function App({ Component, pageProps }) {
         html, body {
           margin: 0;
           padding: 0;
-          box-sizing: border-box;
           font-family: 'Montserrat', sans-serif;
         }
       `}</style>

@@ -39,5 +39,4 @@ export const COUNTRIES_PART1 = [
   { code: "CV", name: "Cape Verde", dial: "+238", placeholder: "991 23 456" },
   { code: "KY", name: "Cayman Islands", dial: "+1-345", placeholder: "(345) 945-1234" },
   { code: "CF", name: "Central African Republic", dial: "+236", placeholder: "70 12 34 56" },
-  { code: "IN", name: "India", dial: "+91", placeholder: "09123 456789" } // ✅ India
 ];

@@ -49,7 +49,7 @@ export default function SubscribeForm() {
         fontFamily: "Montserrat, sans-serif",
         fontSize: "16px",
         color: "#1f2937",
-        "::placeholder": { color: "#9ca3af" },
+        "::placeholder": { color: "#9ca3af", fontFamily: "Montserrat, sans-serif" },
       },
       invalid: { color: "#b42318" },
     },
@@ -217,7 +217,7 @@ export default function SubscribeForm() {
         background: "#00bbff",
         display: "flex",
         justifyContent: "center",
-        padding: "40px 16px",
+        padding: "20px 8px", // ✅ reduced blue padding
       }}
     >
       <div
@@ -276,7 +276,7 @@ export default function SubscribeForm() {
                 ref={phoneCountrySelectRef}
                 value={phoneCountry}
                 onChange={(e) => setPhoneCountry(e.target.value)}
-                style={{ ...inputBase, minWidth: "120px", maxWidth: "140px" }}
+                style={{ ...inputBase, minWidth: "60px", maxWidth: "70px", padding: "6px", fontSize: "14px" }} // ✅ smaller
               >
                 {COUNTRY_CODES.map((c) => (
                   <option key={c.code} value={c.code}>
