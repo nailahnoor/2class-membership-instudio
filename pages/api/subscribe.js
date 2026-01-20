@@ -27,9 +27,9 @@ export default async function handler(req, res) {
       invoice_settings: { default_payment_method: paymentMethodId },
     });
 
-    // --- START: Calculate first of next month in Central Time ---
+    // --- START: Calculate first of next month in Central Time at 6 AM ---
     const nowCT = DateTime.now().setZone("America/Chicago");
-    const firstOfNextMonthCT = nowCT.plus({ months: 1 }).startOf("month");
+    const firstOfNextMonthCT = nowCT.plus({ months: 1 }).startOf("month").set({ hour: 6, minute: 0, second: 0 });
     const billingCycleAnchor = Math.floor(firstOfNextMonthCT.toSeconds());
     // --- END ---
 
