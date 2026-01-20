@@ -27,6 +27,20 @@ export default async function handler(req, res) {
       invoice_settings: { default_payment_method: paymentMethodId },
     });
 
+    // --- START: Calculate first of next month in Central Time ---
+    const nowCT = DateTime.now().setZone("America/Chicago");
+    const firstOfNextMonthCT = nowCT.plus({ months: 1 }).startOf("month");
+    const billingCycleAnchor = Math.floor(firstOfNextMonthCT.toSeconds());
+    // --- END ---
+
+    const subscription = await stripe.subscriptions.create({
+      customer: customer.id,
+      items: [{ price: process.env.STRIPE_PRICE_ID }],
+      billing_cycle_anchor: billingCycleAnchor,
+      proration_behavior: "none",
+      collection_method: "charge_automatically",
+    });
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: 4500,
       currency: "usd",
@@ -45,21 +59,8 @@ export default async function handler(req, res) {
         membership_name:
           "2 Group Classes / Monthly Membership (Auto-Pay) / In-Studio",
         source: "custom_app",
+        subscription_id: subscription.id, // ✅ NEW: attach subscription ID
       },
-    });
-
-    // --- START: Calculate first of next month in Central Time ---
-    const nowCT = DateTime.now().setZone("America/Chicago");
-    const firstOfNextMonthCT = nowCT.plus({ months: 1 }).startOf("month");
-    const billingCycleAnchor = Math.floor(firstOfNextMonthCT.toSeconds());
-    // --- END ---
-
-    const subscription = await stripe.subscriptions.create({
-      customer: customer.id,
-      items: [{ price: process.env.STRIPE_PRICE_ID }],
-      billing_cycle_anchor: billingCycleAnchor,
-      proration_behavior: "none",
-      collection_method: "charge_automatically",
     });
 
     return res.status(200).json({
