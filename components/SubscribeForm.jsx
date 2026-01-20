@@ -62,6 +62,9 @@ export default function SubscribeForm() {
     fontSize: "15px",
     fontFamily: "Montserrat, sans-serif",
     outline: "none",
+    boxSizing: "border-box",
+    display: "flex",
+    alignItems: "center", // ✅ vertically center text
   };
 
   const groupBox = {
@@ -89,7 +92,6 @@ export default function SubscribeForm() {
   const phoneRegions = REGIONS[phoneCountry] || [];
   const billingRegions = REGIONS[billingCountry] || [];
 
-  // ✅ Update phone placeholder based on phoneCountry
   useEffect(() => {
     const countryData = COUNTRY_CODES.find((c) => c.code === phoneCountry);
     if (countryData && countryData.placeholder) {
@@ -97,19 +99,17 @@ export default function SubscribeForm() {
     } else {
       setPhonePlaceholder("(201) 555‑0123");
     }
-    setPhone(""); // clear phone input when changing country
+    setPhone("");
   }, [phoneCountry]);
 
-  // ✅ Auto-format phone input to match placeholder format
   const handlePhoneChange = (e) => {
-    const input = e.target.value.replace(/\D/g, ""); // digits only
+    const input = e.target.value.replace(/\D/g, "");
     const countryData = COUNTRY_CODES.find((c) => c.code === phoneCountry);
     if (!countryData || !countryData.placeholder) {
       setPhone(e.target.value);
       return;
     }
 
-    const placeholderDigits = countryData.placeholder.replace(/\D/g, "");
     let formatted = "";
     let digitIndex = 0;
 
@@ -135,7 +135,6 @@ export default function SubscribeForm() {
       return;
     }
 
-    // ✅ Phone validation
     const countryData = COUNTRY_CODES.find((c) => c.code === phoneCountry);
     const enteredDigits = phone.replace(/\D/g, "");
     const expectedDigits = (countryData?.placeholder || "").replace(/\D/g, "").length;
@@ -154,7 +153,6 @@ export default function SubscribeForm() {
     try {
       const cardElement = elements.getElement(CardNumberElement);
 
-      // ✅ Prepend country dial code to phone for Stripe correctly
       let dialCode = countryData?.dial || "";
       if (dialCode && !dialCode.startsWith("+")) dialCode = "+" + dialCode;
       const digitsOnly = phone.replace(/\D/g, "");
@@ -184,7 +182,7 @@ export default function SubscribeForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: contactName, // ✅ contact details name sent to 'individual_name'
+          name: contactName,
           email,
           phone: phoneForStripe,
           paymentMethodId: paymentMethod.id,
@@ -214,10 +212,10 @@ export default function SubscribeForm() {
     <div
       style={{
         minHeight: "100vh",
-        background: "transparent", // ✅ no blue on mobile
+        background: "transparent", // ✅ remove blue on mobile
         display: "flex",
         justifyContent: "center",
-        padding: "0px", // ✅ white card reaches edges
+        padding: "0px", // ✅ white edges reach screen
       }}
     >
       <div
@@ -276,7 +274,7 @@ export default function SubscribeForm() {
                 ref={phoneCountrySelectRef}
                 value={phoneCountry}
                 onChange={(e) => setPhoneCountry(e.target.value)}
-                style={{ ...inputBase, minWidth: "60px", maxWidth: "70px", padding: "6px", fontSize: "14px" }} // smaller on mobile
+                style={{ ...inputBase, minWidth: "60px", maxWidth: "70px", padding: "6px", fontSize: "14px" }}
               >
                 {COUNTRY_CODES.map((c) => (
                   <option key={c.code} value={c.code}>
@@ -372,48 +370,48 @@ export default function SubscribeForm() {
               />
             </div>
 
-            {/* City + Postal Code + State/Province */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <input
-                  type="text"
-                  placeholder="City"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  required
-                  style={{ ...inputBase, flex: 1 }}
-                />
-                <input
-                  type="text"
-                  placeholder="Postal Code"
-                  value={zip}
-                  onChange={(e) => setZip(e.target.value)}
-                  required
-                  style={{ ...inputBase, flex: 1 }}
-                />
-              </div>
-
-              {billingRegions.length > 0 && (
-                <>
-                  <div style={{ borderTop: "1px solid #e5e7eb" }} /> {/* light grey line */}
-                  <select
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    required
-                    style={selectStyle}
-                  >
-                    <option value="" disabled>
-                      {REGION_LABELS[billingCountry] || "State"}
-                    </option>
-                    {billingRegions.map((s) => (
-                      <option key={s.code} value={s.code}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              )}
+            {/* City + Postal Code */}
+            <div style={{ display: "flex" }}>
+              <input
+                type="text"
+                placeholder="City"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                required
+                style={{ ...inputBase, flex: 1 }}
+              />
+              <div style={vDivider} />
+              <input
+                type="text"
+                placeholder="Postal Code"
+                value={zip}
+                onChange={(e) => setZip(e.target.value)}
+                required
+                style={{ ...inputBase, flex: 1 }}
+              />
             </div>
+
+            {/* State / Province */}
+            {billingRegions.length > 0 && (
+              <>
+                <div style={{ borderTop: "1px solid #e5e7eb" }} /> {/* ✅ grey line */}
+                <select
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  required
+                  style={{ ...selectStyle, width: "100%", marginTop: "0px" }}
+                >
+                  <option value="" disabled>
+                    {REGION_LABELS[billingCountry] || "State"}
+                  </option>
+                  {billingRegions.map((s) => (
+                    <option key={s.code} value={s.code}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
           </div>
 
           {/* TERMS */}
