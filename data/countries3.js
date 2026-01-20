@@ -1,0 +1,23 @@
+export const COUNTRIES_PART3 = [
+  { code: "GI", name: "Gibraltar", dial: "+350", placeholder: "540 12345" },
+  { code: "GR", name: "Greece", dial: "+30", placeholder: "69 1234 5678" },
+  { code: "GL", name: "Greenland", dial: "+299", placeholder: "22 12 34" },
+  { code: "GD", name: "Grenada", dial: "+1-473", placeholder: "(473) 444-1234" },
+  { code: "GP", name: "Guadeloupe", dial: "+590", placeholder: "0690 12 34 56" },
+  { code: "GU", name: "Guam", dial: "+1-671", placeholder: "(671) 555-1234" },
+  { code: "GT", name: "Guatemala", dial: "+502", placeholder: "4123 4567" },
+  { code: "GG", name: "Guernsey", dial: "+44-1481", placeholder: "01481 123456" },
+  { code: "GN", name: "Guinea", dial: "+224", placeholder: "601 23 4567" },
+  { code: "GW", name: "Guinea-Bissau", dial: "+245", placeholder: "991 12 345" },
+  { code: "GY", name: "Guyana", dial: "+592", placeholder: "600 1234" },
+  { code: "HT", name: "Haiti", dial: "+509", placeholder: "36 12 34 56" },
+  { code: "HN", name: "Honduras", dial: "+504", placeholder: "9123 4567" },
+  { code: "HK", name: "Hong Kong SAR China", dial: "+852", placeholder: "9123 4567" },
+  { code: "HU", name: "Hungary", dial: "+36", placeholder: "20 123 4567" },
+  { code: "IS", name: "Iceland", dial: "+354", placeholder: "611 2345" },
+  { code: "IN", name: "India", dial: "+91", placeholder: "09123 456789" },
+  { code: "ID", name: "Indonesia", dial: "+62", placeholder: "0812 3456 7890" },
+  { code: "IR", name: "Iran", dial: "+98", placeholder: "0912 345 6789" },
+  { code: "IQ", name: "Iraq", dial: "+964", placeholder: "7701 234567" },
+  { code: "IE", name: "Ireland", dial: "+353", placeholder: "083 123 4567" }
+];
