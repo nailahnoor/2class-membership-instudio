@@ -8,10 +8,11 @@ export default async function handler(req, res) {
 
   try {
     const { name, email, phone, paymentMethodId, address } = req.body;
-    if (!paymentMethodId || !email) return res.status(400).json({ error: "Missing required fields" });
+    if (!paymentMethodId || !email)
+      return res.status(400).json({ error: "Missing required fields" });
 
     const customer = await stripe.customers.create({
-      individual_name: name,
+      individual_name: name, // ✅ Contact details name goes here
       email,
       phone,
       address: {
@@ -33,6 +34,18 @@ export default async function handler(req, res) {
       payment_method: paymentMethodId,
       off_session: true,
       confirm: true,
+
+      // ✅ Added for Zapier + Google Sheets consistency
+      description:
+        "2 Group Classes / Monthly Membership (Auto-Pay) / In-Studio",
+
+      metadata: {
+        mode: "subscription",
+        payment_type: "signup",
+        membership_name:
+          "2 Group Classes / Monthly Membership (Auto-Pay) / In-Studio",
+        source: "custom_app",
+      },
     });
 
     // --- START: Calculate first of next month in Central Time ---
