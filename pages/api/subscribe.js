@@ -1,4 +1,5 @@
 import stripe from "../../lib/stripe";
+import { DateTime } from "luxon"; // Add this import
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -10,7 +11,7 @@ export default async function handler(req, res) {
     if (!paymentMethodId || !email) return res.status(400).json({ error: "Missing required fields" });
 
     const customer = await stripe.customers.create({
-      individual_name: name, // ✅ Contact details name goes here
+      individual_name: name,
       email,
       phone,
       address: {
@@ -34,13 +35,16 @@ export default async function handler(req, res) {
       confirm: true,
     });
 
-    const now = new Date();
-    const firstOfNextMonth = Math.floor(new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime() / 1000);
+    // --- START: Calculate first of next month in Central Time ---
+    const nowCT = DateTime.now().setZone("America/Chicago");
+    const firstOfNextMonthCT = nowCT.plus({ months: 1 }).startOf("month");
+    const billingCycleAnchor = Math.floor(firstOfNextMonthCT.toSeconds());
+    // --- END ---
 
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: process.env.STRIPE_PRICE_ID }],
-      billing_cycle_anchor: firstOfNextMonth,
+      billing_cycle_anchor: billingCycleAnchor,
       proration_behavior: "none",
       collection_method: "charge_automatically",
     });
