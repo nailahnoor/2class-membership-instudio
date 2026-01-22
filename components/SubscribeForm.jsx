@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"; 
+import { useState, useRef, useEffect } from "react";
 import {
   CardNumberElement,
   CardExpiryElement,
@@ -7,22 +7,23 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 
-// ✅ Import countries and regions data
+import intlTelInput from "intl-tel-input";
+import "intl-tel-input/build/css/intlTelInput.css";
+
 import { COUNTRY_CODES, COUNTRIES } from "../data/countries";
 import { REGIONS } from "../data/regions";
 
 export default function SubscribeForm() {
   const stripe = useStripe();
   const elements = useElements();
-  const phoneCountrySelectRef = useRef(null);
+
+  const phoneInputRef = useRef(null);
+  const itiRef = useRef(null);
   const billingCountrySelectRef = useRef(null);
 
-  // ✅ Separate state for contact vs billing info
   const [contactName, setContactName] = useState("");
   const [billingName, setBillingName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [phoneCountry, setPhoneCountry] = useState("US");
   const [address1, setAddress1] = useState("");
   const [address2, setAddress2] = useState("");
   const [city, setCity] = useState("");
@@ -33,9 +34,7 @@ export default function SubscribeForm() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [phonePlaceholder, setPhonePlaceholder] = useState("(201) 555‑0123");
 
-  // ✅ Dynamic State/Province label
   const REGION_LABELS = {
     US: "State",
     CA: "Province",
@@ -43,13 +42,92 @@ export default function SubscribeForm() {
     IN: "State",
   };
 
+  const billingRegions = REGIONS[billingCountry] || [];
+
+  const getCountryByCode = (code) =>
+    COUNTRY_CODES.find((c) => c.code.toUpperCase() === code.toUpperCase());
+
+  const formatNumber = (value, placeholder) => {
+    const digits = value.replace(/\D/g, "");
+    let formatted = "";
+    let index = 0;
+
+    for (let i = 0; i < placeholder.length; i++) {
+      if (index >= digits.length) break;
+      if (/\d/.test(placeholder[i])) {
+        formatted += digits[index];
+        index++;
+      } else {
+        formatted += placeholder[i];
+      }
+    }
+    return formatted;
+  };
+
+  useEffect(() => {
+    if (!phoneInputRef.current) return;
+
+    itiRef.current = intlTelInput(phoneInputRef.current, {
+      initialCountry: "us",
+      separateDialCode: true,
+      nationalMode: true,
+      formatOnDisplay: true,
+      allowDropdown: true,
+      showFlags: true,
+      showSelectedDialCode: true,
+      utilsScript:
+        "https://cdn.jsdelivr.net/npm/intl-tel-input@19.1.1/build/js/utils.js",
+      dropdownContainer: document.body,
+    });
+
+    const setPhonePlaceholder = () => {
+      const countryData = itiRef.current.getSelectedCountryData();
+      const country = getCountryByCode(countryData.iso2);
+      if (country?.placeholder) {
+        phoneInputRef.current.placeholder = country.placeholder;
+        phoneInputRef.current.maxLength =
+          country.placeholder.replace(/\D/g, "").length +
+          country.placeholder.replace(/\d/g, "").length;
+        phoneInputRef.current.style.color = "#9ca3af";
+      }
+    };
+
+    setPhonePlaceholder();
+
+    const handleInput = () => {
+      const countryData = itiRef.current.getSelectedCountryData();
+      const country = getCountryByCode(countryData.iso2);
+      if (!country?.placeholder) return;
+      phoneInputRef.current.value = formatNumber(
+        phoneInputRef.current.value,
+        country.placeholder
+      );
+      phoneInputRef.current.style.color = "#000";
+    };
+
+    phoneInputRef.current.addEventListener("input", handleInput);
+    phoneInputRef.current.addEventListener("countrychange", setPhonePlaceholder);
+
+    return () => {
+      phoneInputRef.current.removeEventListener("input", handleInput);
+      phoneInputRef.current.removeEventListener(
+        "countrychange",
+        setPhonePlaceholder
+      );
+      itiRef.current?.destroy();
+    };
+  }, []);
+
   const cardStyle = {
     style: {
       base: {
         fontFamily: "Montserrat, sans-serif",
         fontSize: "16px",
         color: "#1f2937",
-        "::placeholder": { color: "#9ca3af", fontFamily: "Montserrat, sans-serif" },
+        "::placeholder": {
+          color: "#9ca3af",
+          fontFamily: "Montserrat, sans-serif",
+        },
       },
       invalid: { color: "#b42318" },
     },
@@ -64,7 +142,7 @@ export default function SubscribeForm() {
     outline: "none",
     boxSizing: "border-box",
     display: "flex",
-    alignItems: "center", // ✅ vertically center text
+    alignItems: "center",
   };
 
   const groupBox = {
@@ -89,42 +167,6 @@ export default function SubscribeForm() {
     color: "#1f2937",
   };
 
-  const phoneRegions = REGIONS[phoneCountry] || [];
-  const billingRegions = REGIONS[billingCountry] || [];
-
-  useEffect(() => {
-    const countryData = COUNTRY_CODES.find((c) => c.code === phoneCountry);
-    if (countryData && countryData.placeholder) {
-      setPhonePlaceholder(countryData.placeholder);
-    } else {
-      setPhonePlaceholder("(201) 555‑0123");
-    }
-    setPhone("");
-  }, [phoneCountry]);
-
-  const handlePhoneChange = (e) => {
-    const input = e.target.value.replace(/\D/g, "");
-    const countryData = COUNTRY_CODES.find((c) => c.code === phoneCountry);
-    if (!countryData || !countryData.placeholder) {
-      setPhone(e.target.value);
-      return;
-    }
-
-    let formatted = "";
-    let digitIndex = 0;
-
-    for (let i = 0; i < countryData.placeholder.length; i++) {
-      if (/\d/.test(countryData.placeholder[i])) {
-        formatted += input[digitIndex] || "";
-        digitIndex++;
-      } else {
-        if (digitIndex < input.length) formatted += countryData.placeholder[i];
-      }
-    }
-
-    setPhone(formatted);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
@@ -135,16 +177,29 @@ export default function SubscribeForm() {
       return;
     }
 
-    const countryData = COUNTRY_CODES.find((c) => c.code === phoneCountry);
-    const enteredDigits = phone.replace(/\D/g, "");
-    const expectedDigits = (countryData?.placeholder || "").replace(/\D/g, "").length;
-    if (!enteredDigits || enteredDigits.length !== expectedDigits) {
-      setErrorMessage("Please enter a valid phone number.");
+    if (!stripe || !elements) {
+      setErrorMessage("Stripe has not loaded yet.");
       return;
     }
 
-    if (!stripe || !elements) {
-      setErrorMessage("Stripe has not loaded yet.");
+    const iti = itiRef.current;
+    if (!iti) {
+      setErrorMessage("Phone input is not ready.");
+      return;
+    }
+
+    // ✅ Clean phone number: remove all non-digits
+    let rawNumber = phoneInputRef.current.value.replace(/\D/g, "");
+
+    // Get selected country dial code
+    const dialCode = iti.getSelectedCountryData().dialCode;
+
+    // Combine dial code + raw digits
+    let phoneForStripe = `+${dialCode}${rawNumber.startsWith(dialCode) ? rawNumber.slice(dialCode.length) : rawNumber}`;
+
+    // Basic length check
+    if (rawNumber.length < 6) {
+      setErrorMessage("Please enter a valid phone number.");
       return;
     }
 
@@ -152,12 +207,6 @@ export default function SubscribeForm() {
 
     try {
       const cardElement = elements.getElement(CardNumberElement);
-
-      let dialCode = countryData?.dial || "";
-      if (dialCode && !dialCode.startsWith("+")) dialCode = "+" + dialCode;
-      const digitsOnly = phone.replace(/\D/g, "");
-      const phoneForStripe = `${dialCode} ${digitsOnly}`;
-
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: "card",
         card: cardElement,
@@ -212,10 +261,10 @@ export default function SubscribeForm() {
     <div
       style={{
         minHeight: "100vh",
-        background: "transparent", // ✅ remove blue on mobile
+        background: "transparent",
         display: "flex",
         justifyContent: "center",
-        padding: "0px", // ✅ white edges reach screen
+        padding: "0px",
       }}
     >
       <div
@@ -229,6 +278,31 @@ export default function SubscribeForm() {
           fontFamily: "Montserrat, sans-serif",
         }}
       >
+        <style jsx global>{`
+          .iti {
+            width: 100%;
+          }
+          .iti__input {
+            height: 48px;
+            font-size: 15px;
+            font-family: Montserrat, sans-serif;
+            box-sizing: border-box;
+            padding-left: 56px !important;
+          }
+          .iti__flag-container {
+            height: 48px;
+            display: flex;
+            align-items: center;
+          }
+          .iti__country-list {
+            max-height: 240px;
+            overflow-y: auto;
+          }
+          .iti__search {
+            display: none !important; /* hide search field */
+          }
+        `}</style>
+
         <h1
           style={{
             fontSize: "20px",
@@ -245,7 +319,6 @@ export default function SubscribeForm() {
           <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px" }}>
             Contact details
           </h3>
-
           <div style={groupBox}>
             <div style={divider}>
               <input
@@ -257,7 +330,6 @@ export default function SubscribeForm() {
                 style={inputBase}
               />
             </div>
-
             <div style={divider}>
               <input
                 type="text"
@@ -268,29 +340,8 @@ export default function SubscribeForm() {
                 style={inputBase}
               />
             </div>
-
-            <div style={{ display: "flex", gap: "8px" }}>
-              <select
-                ref={phoneCountrySelectRef}
-                value={phoneCountry}
-                onChange={(e) => setPhoneCountry(e.target.value)}
-                style={{ ...inputBase, minWidth: "60px", maxWidth: "70px", padding: "6px", fontSize: "14px" }}
-              >
-                {COUNTRY_CODES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.dial} — {c.name}
-                  </option>
-                ))}
-              </select>
-
-              <input
-                type="tel"
-                placeholder={phonePlaceholder}
-                value={phone}
-                onChange={handlePhoneChange}
-                required
-                style={{ ...inputBase, flex: 1 }}
-              />
+            <div style={{ padding: "0px" }}>
+              <input ref={phoneInputRef} type="tel" required style={inputBase} />
             </div>
           </div>
 
@@ -298,7 +349,6 @@ export default function SubscribeForm() {
           <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px" }}>
             Card information
           </h3>
-
           <div style={groupBox}>
             <div style={divider}>
               <input
@@ -310,13 +360,11 @@ export default function SubscribeForm() {
                 style={inputBase}
               />
             </div>
-
             <div style={divider}>
               <div style={{ padding: "14px" }}>
                 <CardNumberElement options={cardStyle} />
               </div>
             </div>
-
             <div style={{ display: "flex" }}>
               <div style={{ flex: 1, padding: "14px" }}>
                 <CardExpiryElement options={cardStyle} />
@@ -332,7 +380,6 @@ export default function SubscribeForm() {
           <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px" }}>
             Billing address
           </h3>
-
           <div style={groupBox}>
             <div style={divider}>
               <select
@@ -348,7 +395,6 @@ export default function SubscribeForm() {
                 ))}
               </select>
             </div>
-
             <div style={divider}>
               <input
                 type="text"
@@ -359,7 +405,6 @@ export default function SubscribeForm() {
                 style={inputBase}
               />
             </div>
-
             <div style={divider}>
               <input
                 type="text"
@@ -369,8 +414,6 @@ export default function SubscribeForm() {
                 style={inputBase}
               />
             </div>
-
-            {/* City + Postal Code */}
             <div style={{ display: "flex" }}>
               <input
                 type="text"
@@ -391,15 +434,14 @@ export default function SubscribeForm() {
               />
             </div>
 
-            {/* State / Province */}
             {billingRegions.length > 0 && (
               <>
-                <div style={{ borderTop: "1px solid #e5e7eb" }} /> {/* ✅ grey line */}
+                <div style={{ borderTop: "1px solid #e5e7eb" }} />
                 <select
                   value={state}
                   onChange={(e) => setState(e.target.value)}
                   required
-                  style={{ ...selectStyle, width: "100%", marginTop: "0px" }}
+                  style={{ ...selectStyle, width: "100%" }}
                 >
                   <option value="" disabled>
                     {REGION_LABELS[billingCountry] || "State"}
@@ -418,7 +460,6 @@ export default function SubscribeForm() {
           <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px" }}>
             Purchase Terms
           </h3>
-
           <ul
             style={{
               fontSize: "13px",
@@ -427,13 +468,28 @@ export default function SubscribeForm() {
               lineHeight: "1.7",
             }}
           >
-            <li>The first month is charged in full at checkout and is not prorated, regardless of purchase date.</li>
-            <li>Purchase grants access to classes immediately and through the end of the current calendar month.</li>
+            <li>
+              The first month is charged in full at checkout and is not prorated,
+              regardless of purchase date.
+            </li>
+            <li>
+              Purchase grants access to classes immediately and through the end of
+              the current calendar month.
+            </li>
             <li>Recurring billing occurs on the 1st of each month.</li>
-            <li>Classes must be used within the calendar month in which they are purchased.</li>
-            <li>Unused classes expire at the end of the month and cannot be carried over to the next month or transferred to another person.</li>
+            <li>
+              Classes must be used within the calendar month in which they are
+              purchased.
+            </li>
+            <li>
+              Unused classes expire at the end of the month and cannot be carried
+              over or transferred.
+            </li>
             <li>All sales are final. No refunds, credits, or exchanges.</li>
-            <li>Memberships automatically renew on the 1st of each month unless canceled before the next billing date via the Stripe Customer Portal.</li>
+            <li>
+              Memberships auto-renew unless canceled before the next billing date
+              via the Stripe Customer Portal.
+            </li>
           </ul>
 
           <label
