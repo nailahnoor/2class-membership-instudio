@@ -77,12 +77,16 @@ export default function SubscribeForm() {
       showSelectedDialCode: true,
       utilsScript:
         "https://cdn.jsdelivr.net/npm/intl-tel-input@19.1.1/build/js/utils.js",
-      dropdownContainer: document.body,
+      dropdownContainer: phoneInputRef.current.parentNode,
     });
 
     const setPhonePlaceholder = () => {
       const countryData = itiRef.current.getSelectedCountryData();
       const country = getCountryByCode(countryData.iso2);
+
+      // ✅ FIX: clear number when country changes
+      phoneInputRef.current.value = "";
+
       if (country?.placeholder) {
         phoneInputRef.current.placeholder = country.placeholder;
         phoneInputRef.current.maxLength =
@@ -98,6 +102,7 @@ export default function SubscribeForm() {
       const countryData = itiRef.current.getSelectedCountryData();
       const country = getCountryByCode(countryData.iso2);
       if (!country?.placeholder) return;
+
       phoneInputRef.current.value = formatNumber(
         phoneInputRef.current.value,
         country.placeholder
@@ -188,16 +193,15 @@ export default function SubscribeForm() {
       return;
     }
 
-    // ✅ Clean phone number: remove all non-digits
     let rawNumber = phoneInputRef.current.value.replace(/\D/g, "");
-
-    // Get selected country dial code
     const dialCode = iti.getSelectedCountryData().dialCode;
 
-    // Combine dial code + raw digits
-    let phoneForStripe = `+${dialCode}${rawNumber.startsWith(dialCode) ? rawNumber.slice(dialCode.length) : rawNumber}`;
+    let phoneForStripe = `+${dialCode}${
+      rawNumber.startsWith(dialCode)
+        ? rawNumber.slice(dialCode.length)
+        : rawNumber
+    }`;
 
-    // Basic length check
     if (rawNumber.length < 6) {
       setErrorMessage("Please enter a valid phone number.");
       return;
@@ -299,7 +303,7 @@ export default function SubscribeForm() {
             overflow-y: auto;
           }
           .iti__search {
-            display: none !important; /* hide search field */
+            display: none !important;
           }
         `}</style>
 
@@ -460,6 +464,7 @@ export default function SubscribeForm() {
           <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px" }}>
             Purchase Terms
           </h3>
+
           <ul
             style={{
               fontSize: "13px",
